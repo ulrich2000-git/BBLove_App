@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "358715571209",
+    "project_id": "bblove-8f2d6",
+    "storage_bucket": "bblove-8f2d6.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:358715571209:android:701901b1c71180031e8cd8",
+        "android_client_info": {
+          "package_name": "com.example.bblove"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAcVbnN-QLM7QbpyK4aWcZX45wHO_cfT_k"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

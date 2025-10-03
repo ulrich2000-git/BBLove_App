@@ -1,3 +1,5 @@
+import 'package:bblove/firebase_options.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'core/theme.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
@@ -14,8 +16,14 @@ import 'package:bblove/home/presentation/pages/profile_page.dart';
 // Package pub.dev
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
-void main() {
+Future<void> main() async {
   runApp(const BBLoveApp());
+
+  await Firebase.initializeApp(
+
+    options: DefaultFirebaseOptions.currentPlatform,
+
+);
 }
 
 class BBLoveApp extends StatelessWidget {
@@ -81,22 +89,27 @@ class _MainNavigationState extends State<MainNavigation> {
             items: [
               SalomonBottomBarItem(
                 icon: const Icon(Icons.home_outlined),
-                title: const Text("Home"),
+                title: const Text("Accueil"),
+                selectedColor: Colors.pinkAccent,
+              ),
+              SalomonBottomBarItem(
+                icon: const Icon(Icons.search),
+                title: const Text("Decouvrir"),
                 selectedColor: Colors.pinkAccent,
               ),
               SalomonBottomBarItem(
                 icon: const Icon(Icons.chat_bubble_outline),
-                title: const Text("Chat"),
+                title: const Text("Message"),
                 selectedColor: Colors.pinkAccent,
               ),
               SalomonBottomBarItem(
-                icon: const Icon(Icons.favorite_border),
-                title: const Text("Matches"),
+                icon: const Icon(Icons.people_outline),
+                title: const Text("Matching"),
                 selectedColor: Colors.pinkAccent,
               ),
               SalomonBottomBarItem(
                 icon: const Icon(Icons.person_outline),
-                title: const Text("Profile"),
+                title: const Text("Profil"),
                 selectedColor: Colors.pinkAccent,
               ),
             ],

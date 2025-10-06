@@ -1,6 +1,6 @@
-import 'package:bblove/firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+
+// Thème et pages d'authentification
 import 'core/theme.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
@@ -16,14 +16,9 @@ import 'package:bblove/home/presentation/pages/profile_page.dart';
 // Package pub.dev
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
-Future<void> main() async {
+void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const BBLoveApp());
-
-  await Firebase.initializeApp(
-
-    options: DefaultFirebaseOptions.currentPlatform,
-
-);
 }
 
 class BBLoveApp extends StatelessWidget {
@@ -41,13 +36,12 @@ class BBLoveApp extends StatelessWidget {
         "/login": (_) => const LoginPage(),
         "/signup": (_) => const SignUpPage(),
         "/forgot-password": (_) => const ForgotPasswordPage(),
-        "/home": (_) => const MainNavigation(), // ⬅️ Navigation avec navbar
+        "/home": (_) => const MainNavigation(),
       },
     );
   }
 }
 
-/// ✅ Widget qui gère la navigation principale avec SalomonBottomBar
 class MainNavigation extends StatefulWidget {
   const MainNavigation({super.key});
 
@@ -80,7 +74,7 @@ class _MainNavigationState extends State<MainNavigation> {
                 color: Colors.black.withOpacity(0.06),
                 blurRadius: 12,
                 offset: const Offset(0, 4),
-              )
+              ),
             ],
           ),
           child: SalomonBottomBar(
@@ -90,11 +84,6 @@ class _MainNavigationState extends State<MainNavigation> {
               SalomonBottomBarItem(
                 icon: const Icon(Icons.home_outlined),
                 title: const Text("Accueil"),
-                selectedColor: Colors.pinkAccent,
-              ),
-              SalomonBottomBarItem(
-                icon: const Icon(Icons.search),
-                title: const Text("Decouvrir"),
                 selectedColor: Colors.pinkAccent,
               ),
               SalomonBottomBarItem(

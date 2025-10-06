@@ -9,7 +9,7 @@ class CustomTextField extends StatelessWidget {
     super.key,
     required this.hintText,
     this.obscureText = false,
-    this.keyboardType = TextInputType.text,
+    this.keyboardType = TextInputType.text, required TextEditingController controller,
   });
 
   @override

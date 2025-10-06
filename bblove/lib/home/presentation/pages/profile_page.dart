@@ -6,161 +6,192 @@ class ProfilePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F4), // Couleur douce de fond
-      body: SafeArea(
-        child: Column(
-          children: [
-            // Barre de navigation simple
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Row(
-                children: [
-                  IconButton(
-                    icon: const Icon(Icons.arrow_back, color: Colors.black),
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                  const Expanded(
-                    child: Center(
-                      child: Text(
-                        "Profile",
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 48), // pour équilibrer la flèche gauche
-                ],
-              ),
-            ),
-
-            // Image de couverture + photo de profil
-            Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  height: 160,
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: const BorderRadius.vertical(
-                      bottom: Radius.circular(20),
-                    ),
-                    image: const DecorationImage(
-                      image: AssetImage("assets/images/cover.jpg"), // 🔑 image de couverture
-                      fit: BoxFit.cover,
-                    ),
-                  ),
-                ),
-                Positioned(
-                  bottom: -50,
-                  child: CircleAvatar(
-                    radius: 55,
-                    backgroundColor: Colors.white,
-                    child: const CircleAvatar(
-                      radius: 50,
-                      backgroundImage: AssetImage("assets/images/profile.jpg"), // 🔑 photo profil
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 60),
-
-            // Infos utilisateur
-            const Text(
-              "Emma",
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              "26",
-              style: TextStyle(fontSize: 18, color: Colors.black54),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              "Coffee lover and nature enthusiast",
-              style: TextStyle(fontSize: 16, color: Colors.black87),
-              textAlign: TextAlign.center,
-            ),
-
-            const SizedBox(height: 16),
-
-            // Centres d’intérêt
-            Wrap(
-              spacing: 10,
-              children: const [
-                Chip(
-                  label: Text("Travel"),
-                  backgroundColor: Color(0xFFF1EFEF),
-                ),
-                Chip(
-                  label: Text("Art"),
-                  backgroundColor: Color(0xFFF1EFEF),
-                ),
-                Chip(
-                  label: Text("Cooking"),
-                  backgroundColor: Color(0xFFF1EFEF),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 32),
-
-            // Boutons
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepOrangeAccent,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text(
-                        "Edit Profile",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton(
-                      onPressed: () {},
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Colors.transparent),
-                        backgroundColor: Color(0xFFF1EFEF),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                      ),
-                      child: const Text(
-                        "Settings",
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+      // 🩷 Dégradé de fond inspiré de la maquette
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFFFF6A88), Color(0xFFFF99AC)],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+          ),
         ),
+        child: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              children: [
+                // 👤 Section photo et infos
+                const SizedBox(height: 20),
+                CircleAvatar(
+                  radius: 55,
+                  backgroundImage: NetworkImage(
+                    "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
+                  ),
+                ),
+                const SizedBox(height: 14),
+                const Text(
+                  "Preity, 24",
+                  style: TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                const Text(
+                  "En relation bénie ✨",
+                  style: TextStyle(
+                    fontSize: 15,
+                    color: Colors.white70,
+                  ),
+                ),
+                const SizedBox(height: 16),
+
+                // 🔘 Statistiques principales
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.15),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: const [
+                      _StatItem(label: "PROGRÈS", value: "54%"),
+                      _StatItem(label: "NIVEAU", value: "152"),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 28),
+
+                // 🧮 Statistiques secondaires
+                GridView.count(
+                  crossAxisCount: 2,
+                  shrinkWrap: true,
+                  crossAxisSpacing: 18,
+                  mainAxisSpacing: 18,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: const [
+                    _InfoCard(icon: Icons.favorite, color: Colors.pinkAccent, label: "New Matches", value: "13"),
+                    _InfoCard(icon: Icons.chat_bubble_outline, color: Colors.orangeAccent, label: "Messages", value: "264"),
+                    _InfoCard(icon: Icons.people_outline, color: Colors.blueAccent, label: "Profile Views", value: "76"),
+                    _InfoCard(icon: Icons.flash_on, color: Colors.purpleAccent, label: "Super Likes", value: "42"),
+                  ],
+                ),
+                const SizedBox(height: 30),
+
+                // ⚙️ Bouton paramètres
+                ElevatedButton.icon(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.white,
+                    foregroundColor: Colors.pinkAccent,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 28, vertical: 14),
+                  ),
+                  onPressed: () {},
+                  icon: const Icon(Icons.settings_outlined),
+                  label: const Text(
+                    "Paramètres du profil",
+                    style: TextStyle(fontSize: 16),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// 🔹 Widget pour les stats principales (progression, niveau)
+class _StatItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _StatItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 13,
+            color: Colors.white70,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// 🔹 Widget pour chaque carte d’infos
+class _InfoCard extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+  final Color color;
+
+  const _InfoCard({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.95),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.06),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: color, size: 28),
+          const SizedBox(height: 10),
+          Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 20,
+              color: Colors.black87,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 13,
+              color: Colors.black54,
+            ),
+          ),
+        ],
       ),
     );
   }

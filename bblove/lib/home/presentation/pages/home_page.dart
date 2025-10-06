@@ -1,4 +1,6 @@
+import 'dart:convert'; // pour base64Decode
 import 'package:flutter/material.dart';
+import 'create_post_page.dart';
 import '../widgets/status_widget.dart';
 import '../widgets/post_widget.dart';
 
@@ -15,7 +17,8 @@ class _HomePageState extends State<HomePage> {
       "user": "Emma",
       "avatar": "https://randomuser.me/api/portraits/women/44.jpg",
       "content": "Beautiful sunset today 🌅",
-      "image": "https://picsum.photos/400/300",
+      "imageUrl": "https://picsum.photos/400/300", // 👈 image réseau
+      "imageBase64": null, // 👈 aucune image en base64
       "likes": 23,
       "comments": 5,
       "isLiked": false,
@@ -24,7 +27,8 @@ class _HomePageState extends State<HomePage> {
       "user": "John",
       "avatar": "https://randomuser.me/api/portraits/men/32.jpg",
       "content": "Just had an amazing coffee ☕️",
-      "image": null,
+      "imageUrl": null,
+      "imageBase64": null,
       "likes": 10,
       "comments": 2,
       "isLiked": true,
@@ -49,8 +53,26 @@ class _HomePageState extends State<HomePage> {
   }
 
   void _createPost() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Open create post page")),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreatePostPage(
+          onPostCreated: (text, String? imageBase64) {
+            setState(() {
+              _posts.insert(0, {
+                "user": "You",
+                "avatar": "https://randomuser.me/api/portraits/men/99.jpg",
+                "content": text,
+                "imageUrl": null, // pas d'URL si c'est un post utilisateur
+                "imageBase64": imageBase64, // 👈 stocke en base64
+                "likes": 0,
+                "comments": 0,
+                "isLiked": false,
+              });
+            });
+          },
+        ),
+      ),
     );
   }
 
@@ -107,11 +129,28 @@ class _HomePageState extends State<HomePage> {
               itemCount: _posts.length,
               itemBuilder: (context, index) {
                 final post = _posts[index];
+
+                // 👇 Choisir quelle image afficher (URL ou Base64)
+                Widget? imageWidget;
+                if (post["imageBase64"] != null) {
+                  imageWidget = Image.memory(
+                    base64Decode(post["imageBase64"]),
+                    height: 200,
+                    fit: BoxFit.cover,
+                  );
+                } else if (post["imageUrl"] != null) {
+                  imageWidget = Image.network(
+                    post["imageUrl"],
+                    height: 200,
+                    fit: BoxFit.cover,
+                  );
+                }
+
                 return PostWidget(
                   user: post["user"],
                   avatar: post["avatar"],
                   content: post["content"],
-                  image: post["image"],
+                  imageWidget: imageWidget, // 👈 on passe directement le widget
                   likes: post["likes"],
                   comments: post["comments"],
                   isLiked: post["isLiked"],
@@ -124,7 +163,6 @@ class _HomePageState extends State<HomePage> {
         ],
       ),
 
-      // Floating Button pour publier
       floatingActionButton: FloatingActionButton(
         backgroundColor: Colors.pinkAccent,
         onPressed: _createPost,

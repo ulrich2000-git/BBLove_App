@@ -1,116 +1,138 @@
-import 'package:bblove/home/presentation/pages/match_confirmation_page.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_card_swiper/flutter_card_swiper.dart';
 
-class MatchPage extends StatelessWidget {
+class MatchPage extends StatefulWidget {
   const MatchPage({super.key});
 
   @override
+  State<MatchPage> createState() => _MatchPageState();
+}
+
+class _MatchPageState extends State<MatchPage> {
+  final CardSwiperController controller = CardSwiperController();
+
+  // 🔹 Mock de profils utilisateurs
+  final List<Map<String, dynamic>> users = [
+    {
+      "name": "Jannie",
+      "age": 25,
+      "distance": "14 km",
+      "image": "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
+    },
+    {
+      "name": "Marianne",
+      "age": 27,
+      "distance": "10 km",
+      "image": "https://images.pexels.com/photos/415829/pexels-photo-774909.jpeg",
+    },
+    {
+      "name": "Céline",
+      "age": 22,
+      "distance": "6 km",
+      "image": "https://images.pexels.com/photos/1858175/pexels-photo-1858175.jpeg",
+    },
+  ];
+
+  @override
   Widget build(BuildContext context) {
-    // Liste fictive (sera remplacée plus tard par les données API / DB)
-    final List<Map<String, String>> matches = [
-      {"name": "Emma", "image": "assets/images/emma.jpg"},
-      {"name": "John", "image": "assets/images/john.jpg"},
-      {"name": "Mia", "image": "assets/images/mia.jpg"},
-      {"name": "James", "image": "assets/images/james.jpg"},
-    ];
-
     return Scaffold(
-      backgroundColor: const Color(0xFFFDF9F4), // fond doux
+      backgroundColor: Colors.white,
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Titre
-              const Text(
-                "Match",
-                style: TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
+        child: Column(
+          children: [
+            const SizedBox(height: 10),
+            const Text(
+              "Matching 💞",
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.bold,
+                color: Colors.pinkAccent,
               ),
-              const SizedBox(height: 24),
+            ),
+            const SizedBox(height: 20),
 
-              // Liste des matchs
-              Expanded(
-                child: ListView.separated(
-                  itemCount: matches.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 16),
-                  itemBuilder: (context, index) {
-                    final match = matches[index];
-                    return Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: Colors.white,
-                        borderRadius: BorderRadius.circular(16),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black12.withOpacity(0.05),
-                            blurRadius: 5,
-                            offset: const Offset(0, 3),
-                          ),
-                        ],
-                      ),
-                      child: Row(
-                        children: [
-                          // Photo profil
-                          CircleAvatar(
-                            radius: 28,
-                            backgroundImage: AssetImage(match["image"]!),
-                          ),
-                          const SizedBox(width: 16),
-
-                          // Nom
-                          Expanded(
-                            child: Text(
-                              match["name"]!,
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-
-                          // Bouton Subscribe
-                          ElevatedButton(
-                            onPressed: () {
-                              // TODO: Action pour abonnement
-                              Navigator.push(
-                                context, 
-                                MaterialPageRoute(
-                                  builder: (_) => MatchConfirmationPage(name: match["name"]!),
-                                ),
-                              );
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.pinkAccent,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 20,
-                                vertical: 10,
-                              ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(30),
-                              ),
-                            ),
-                            child: const Text(
-                              "Subscribe",
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                ),
+            // 🃏 Swiper des cartes
+            Expanded(
+              child: CardSwiper(
+                controller: controller,
+                cardsCount: users.length,
+                numberOfCardsDisplayed: 1,
+                onSwipe: (previousIndex, currentIndex, direction) {
+                  debugPrint(
+                      "Swiped ${direction.name} on ${users[previousIndex].name}");
+                  return true;
+                },
+                cardBuilder: (context, index, horizontalOffsetPercentage, verticalOffsetPercentage) {
+                  final user = users[index];
+                  return _buildProfileCard(user);
+                },
               ),
-            ],
+            ),
+            const SizedBox(height: 10),
+
+            // ❤️ Boutons Like / Dislike
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                _actionButton(Icons.close, Colors.grey.shade400, () {
+                  controller.swipe(CardSwiperDirection.left);
+                }),
+                _actionButton(Icons.favorite, Colors.pinkAccent, () {
+                  controller.swipe(CardSwiperDirection.right);
+                }),
+              ],
+            ),
+            const SizedBox(height: 20),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProfileCard(Map<String, dynamic> user) {
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        image: DecorationImage(
+          image: NetworkImage(user["image"]),
+          fit: BoxFit.cover,
+        ),
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            colors: [Colors.black.withOpacity(0.4), Colors.transparent],
+            begin: Alignment.bottomCenter,
+            end: Alignment.topCenter,
+          ),
+        ),
+        padding: const EdgeInsets.all(16),
+        alignment: Alignment.bottomLeft,
+        child: Text(
+          "${user["name"]}, ${user["age"]} ans\n${user["distance"]} away",
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
     );
   }
+
+  Widget _actionButton(IconData icon, Color color, VoidCallback onPressed) {
+    return CircleAvatar(
+      radius: 28,
+      backgroundColor: color,
+      child: IconButton(
+        icon: Icon(icon, color: Colors.white, size: 30),
+        onPressed: onPressed,
+      ),
+    );
+  }
+}
+
+extension on Map<String, dynamic> {
+  get name => null;
 }

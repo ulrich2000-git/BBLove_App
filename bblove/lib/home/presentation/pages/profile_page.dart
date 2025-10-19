@@ -1,197 +1,278 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
 
-class ProfilePage extends StatelessWidget {
-  const ProfilePage({super.key});
+class ProfilePage extends StatefulWidget {
+  final String? userId;
+  const ProfilePage({super.key, this.userId});
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      // 🩷 Dégradé de fond inspiré de la maquette
-      body: Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            colors: [Color(0xFFFF6A88), Color(0xFFFF99AC)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-        ),
-        child: SafeArea(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              children: [
-                // 👤 Section photo et infos
-                const SizedBox(height: 20),
-                CircleAvatar(
-                  radius: 55,
-                  backgroundImage: NetworkImage(
-                    "https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg",
-                  ),
-                ),
-                const SizedBox(height: 14),
-                const Text(
-                  "Preity, 24",
-                  style: TextStyle(
-                    fontSize: 26,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  "En relation bénie ✨",
-                  style: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white70,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // 🔘 Statistiques principales
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 30, vertical: 14),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withOpacity(0.15),
-                    borderRadius: BorderRadius.circular(18),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: const [
-                      _StatItem(label: "PROGRÈS", value: "54%"),
-                      _StatItem(label: "NIVEAU", value: "152"),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 28),
-
-                // 🧮 Statistiques secondaires
-                GridView.count(
-                  crossAxisCount: 2,
-                  shrinkWrap: true,
-                  crossAxisSpacing: 18,
-                  mainAxisSpacing: 18,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: const [
-                    _InfoCard(icon: Icons.favorite, color: Colors.pinkAccent, label: "New Matches", value: "13"),
-                    _InfoCard(icon: Icons.chat_bubble_outline, color: Colors.orangeAccent, label: "Messages", value: "264"),
-                    _InfoCard(icon: Icons.people_outline, color: Colors.blueAccent, label: "Profile Views", value: "76"),
-                    _InfoCard(icon: Icons.flash_on, color: Colors.purpleAccent, label: "Super Likes", value: "42"),
-                  ],
-                ),
-                const SizedBox(height: 30),
-
-                // ⚙️ Bouton paramètres
-                ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.white,
-                    foregroundColor: Colors.pinkAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(24),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 28, vertical: 14),
-                  ),
-                  onPressed: () {},
-                  icon: const Icon(Icons.settings_outlined),
-                  label: const Text(
-                    "Paramètres du profil",
-                    style: TextStyle(fontSize: 16),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  State<ProfilePage> createState() => _ProfilePageState();
 }
 
-// 🔹 Widget pour les stats principales (progression, niveau)
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
+class _ProfilePageState extends State<ProfilePage> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
-  const _StatItem({required this.label, required this.value});
+  late final String uid;
+  bool _isLoading = true;
+  bool _isDark = false;
+  Map<String, dynamic>? _userData;
+  File? _pickedImageFile;
 
   @override
-  Widget build(BuildContext context) {
+  void initState() {
+    super.initState();
+    uid = widget.userId ?? (_auth.currentUser?.uid ?? '');
+    _initProfile();
+  }
+
+  Future<void> _initProfile() async {
+    if (uid.isEmpty) {
+      setState(() {
+        _isLoading = false;
+        _userData = {
+          'fullName': 'Utilisateur',
+          'bio': 'Aucun utilisateur trouvé',
+        };
+      });
+      return;
+    }
+
+    try {
+      final docRef = _firestore.collection('users').doc(uid);
+      final snapshot = await docRef.get();
+
+      if (!snapshot.exists) {
+        final currentUser = _auth.currentUser;
+        await docRef.set({
+          'uid': uid,
+          'fullName': currentUser?.displayName ?? 'Utilisateur',
+          'email': currentUser?.email ?? '',
+          'bio': '',
+          'photoBase64': '',
+          'photoURL': currentUser?.photoURL ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      final fresh = await docRef.get();
+      setState(() {
+        _userData = fresh.data();
+        _isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Erreur init profile: $e');
+      setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 75);
+    if (picked == null) return;
+
+    setState(() => _pickedImageFile = File(picked.path));
+    final bytes = await _pickedImageFile!.readAsBytes();
+    final base64Image = base64Encode(bytes);
+
+    try {
+      await _firestore.collection('users').doc(uid).update({
+        'photoBase64': base64Image,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      await _initProfile();
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Photo mise à jour ✅')),
+        );
+      }
+    } catch (e) {
+      debugPrint('Erreur update image: $e');
+    }
+  }
+
+  Future<void> _logout() async {
+    await _auth.signOut();
+    if (mounted) Navigator.pushReplacementNamed(context, '/login');
+  }
+
+  // 🔗 Ouvre une URL externe
+  Future<void> _openUrl(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Impossible d’ouvrir $url')),
+      );
+    }
+  }
+
+  Widget _buildHeader() {
+    final data = _userData ?? {};
+    final name = data['fullName'] ?? 'Utilisateur';
+    final bio = data['bio'] ?? '';
+
+    ImageProvider avatar;
+    if (data['photoBase64'] != null && (data['photoBase64'] as String).isNotEmpty) {
+      try {
+        avatar = MemoryImage(base64Decode(data['photoBase64'] as String));
+      } catch (_) {
+        avatar = const AssetImage('assets/logo.png');
+      }
+    } else {
+      avatar = const NetworkImage('https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg');
+    }
+
     return Column(
       children: [
+        Stack(
+          children: [
+            CircleAvatar(radius: 55, backgroundImage: avatar),
+            if (_auth.currentUser?.uid == uid)
+              Positioned(
+                right: 0,
+                bottom: 0,
+                child: GestureDetector(
+                  onTap: _pickImage,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                    ),
+                    padding: const EdgeInsets.all(6),
+                    child: const Icon(Icons.camera_alt, size: 18, color: Colors.pinkAccent),
+                  ),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
         Text(
-          value,
-          style: const TextStyle(
+          name,
+          style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: _isDark ? Colors.white : Colors.pinkAccent,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: 6),
         Text(
-          label,
-          style: const TextStyle(
-            fontSize: 13,
-            color: Colors.white70,
+          bio.isEmpty ? 'Bio non renseignée' : bio,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: _isDark ? Colors.white70 : Colors.black87,
+            fontSize: 14,
           ),
         ),
       ],
     );
   }
-}
 
-// 🔹 Widget pour chaque carte d’infos
-class _InfoCard extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-
-  const _InfoCard({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
+  Widget _buildActionCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required String url,
+  }) {
+    return GestureDetector(
+      onTap: () => _openUrl(url),
+      child: Card(
+        elevation: 5,
+        color: _isDark ? Colors.grey[900] : Colors.white,
+        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: ListTile(
+          leading: CircleAvatar(
+            backgroundColor: color.withOpacity(0.15),
+            child: Icon(icon, color: color),
+          ),
+          title: Text(
+            title,
+            style: TextStyle(
+              color: _isDark ? Colors.white : Colors.black87,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.95),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.06),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
+    final bgGradient = _isDark
+        ? const LinearGradient(colors: [Colors.black87, Colors.black])
+        : const LinearGradient(colors: [Color(0xFFFFF0F3), Color(0xFFFFEAF0)]);
+
+    return Scaffold(
+      backgroundColor: _isDark ? Colors.black : Colors.white,
+      appBar: AppBar(
+        title: const Text("Mon Profil"),
+        backgroundColor: _isDark ? Colors.black : Colors.pinkAccent,
+        actions: [
+          IconButton(
+            icon: Icon(_isDark ? Icons.light_mode : Icons.dark_mode),
+            onPressed: () => setState(() => _isDark = !_isDark),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 10),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.bold,
-              fontSize: 20,
-              color: Colors.black87,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 13,
-              color: Colors.black54,
-            ),
-          ),
-        ],
+      body: Container(
+        decoration: BoxDecoration(gradient: bgGradient),
+        child: SafeArea(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: Colors.pinkAccent))
+              : SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    children: [
+                      const SizedBox(height: 20),
+                      _buildHeader(),
+                      const SizedBox(height: 20),
+
+                      // 🌸 Cartes de navigation
+                      _buildActionCard(
+                        title: "Demande de Coaching",
+                        icon: Icons.favorite_border,
+                        color: Colors.pinkAccent,
+                        url: "https://bb-love.com/coaching",
+                      ),
+                      _buildActionCard(
+                        title: "Événements à venir",
+                        icon: Icons.event,
+                        color: Colors.orangeAccent,
+                        url: "https://bb-love.com/evenements",
+                      ),
+                      _buildActionCard(
+                        title: "Surprise du jour 🎁",
+                        icon: Icons.card_giftcard,
+                        color: Colors.purpleAccent,
+                        url: "https://bb-love.com/surprise",
+                      ),
+
+                      const SizedBox(height: 30),
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.redAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                        ),
+                        onPressed: _logout,
+                        icon: const Icon(Icons.logout),
+                        label: const Text("Se déconnecter"),
+                      ),
+                      const SizedBox(height: 40),
+                    ],
+                  ),
+                ),
+        ),
       ),
     );
   }

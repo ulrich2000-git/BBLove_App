@@ -1,23 +1,34 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-// Thème et pages d'authentification
+// 🔹 Thème et pages d'authentification
 import 'core/theme.dart';
 import 'features/auth/presentation/pages/splash_page.dart';
 import 'features/auth/presentation/pages/login_page.dart';
-import 'features/auth/presentation/pages/signup_page.dart';
 import 'features/auth/presentation/pages/forgot_password_page.dart';
 
-// Pages principales
+// 🔹 Pages principales
 import 'package:bblove/home/presentation/pages/home_page.dart';
 import 'package:bblove/home/presentation/pages/chat_page.dart';
 import 'package:bblove/home/presentation/pages/matches_page.dart';
 import 'package:bblove/home/presentation/pages/profile_page.dart';
 
-// Package pub.dev
+// 🔹 Packages externes
 import 'package:salomon_bottom_bar/salomon_bottom_bar.dart';
 
-void main() {
+// 🔹 Fichier généré automatiquement par `flutterfire configure`
+import 'firebase_options.dart';
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 🔥 Initialisation de Firebase
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
+
   runApp(const BBLoveApp());
 }
 
@@ -34,7 +45,6 @@ class BBLoveApp extends StatelessWidget {
       routes: {
         "/splash": (_) => const SplashPage(),
         "/login": (_) => const LoginPage(),
-        "/signup": (_) => const SignUpPage(),
         "/forgot-password": (_) => const ForgotPasswordPage(),
         "/home": (_) => const MainNavigation(),
       },
@@ -52,11 +62,11 @@ class MainNavigation extends StatefulWidget {
 class _MainNavigationState extends State<MainNavigation> {
   int _index = 0;
 
-  final List<Widget> _pages = const [
-    HomePage(),
-    ChatPage(),
-    MatchPage(),
-    ProfilePage(),
+  final List<Widget> _pages = [
+    const HomePage(),
+    const ChatPage(),
+    const MatchPage(),
+    ProfilePage(userId: FirebaseAuth.instance.currentUser?.uid ?? ''),
   ];
 
   @override
@@ -108,3 +118,25 @@ class _MainNavigationState extends State<MainNavigation> {
     );
   }
 }
+
+Future<void> ensureUserDocument() async {
+  final user = FirebaseAuth.instance.currentUser;
+  if (user == null) return;
+
+  final doc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+  final snapshot = await doc.get();
+  if (!snapshot.exists) {
+    await doc.set({
+      'uid': user.uid,
+      'fullName': user.displayName ?? 'Utilisateur',
+      'email': user.email ?? '',
+      'photoBase64': '',
+      'bio': '',
+      'age': 'N/A',
+      'gender': '',
+      'location': '',
+      'interests': [],
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+} 

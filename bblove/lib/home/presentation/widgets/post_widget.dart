@@ -21,7 +21,7 @@ class PostWidget extends StatelessWidget {
     required this.comments,
     required this.isLiked,
     required this.onLike,
-    required this.onComment,
+    required this.onComment, required Null Function() onUserTap, required String time,
   });
 
   @override
